@@ -15,7 +15,11 @@ public:
 
 Q *create_queue()
 {
-
+    Q *temp_queue = new Q;
+    temp_queue->start = &temp_queue->data[0];
+    temp_queue->end = &temp_queue->data[0];
+    temp_queue->length = 0;
+    return temp_queue;
 }
 
 void enqueue_byte(Q *q, unsigned char b)
