@@ -4,7 +4,13 @@ using namespace std;
 
 class Q
 {
-
+public:
+    unsigned char data[2048];
+    unsigned char *start;
+    unsigned char *end;
+    const unsigned char *start_of_array = &data[0];
+    const unsigned char *end_of_array = &data[2047];
+    unsigned int length;
 };
 
 Q *create_queue()
