@@ -32,6 +32,13 @@ void destroy_queue(Q *q)
 unsigned char dequeue_byte(Q *q)
 {
 }
+void on_out_of_memory(){
+
+}
+void on_illegal_operation(){
+    
+}
+
 int main()
 {
     Q *q0 = create_queue();
