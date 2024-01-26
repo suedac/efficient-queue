@@ -24,19 +24,21 @@ Q *create_queue()
 
 void enqueue_byte(Q *q, unsigned char b)
 {
-     
+    *q->end = b;
+    q->end += sizeof(unsigned char);
 }
 void destroy_queue(Q *q)
 {
+    
 }
 unsigned char dequeue_byte(Q *q)
 {
 }
-void on_out_of_memory(){
-
+void on_out_of_memory()
+{
 }
-void on_illegal_operation(){
-    
+void on_illegal_operation()
+{
 }
 
 int main()
