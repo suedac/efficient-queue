@@ -13,6 +13,14 @@ public:
     unsigned int length;
 };
 
+void on_out_of_memory()
+{
+}
+void on_illegal_operation()
+{
+    cout << "bonk! straight to gulag" << endl;
+}
+
 Q *create_queue()
 {
     Q *temp_queue = new Q;
@@ -29,16 +37,22 @@ void enqueue_byte(Q *q, unsigned char b)
 }
 void destroy_queue(Q *q)
 {
-    
+    q->~Q();
 }
 unsigned char dequeue_byte(Q *q)
 {
-}
-void on_out_of_memory()
-{
-}
-void on_illegal_operation()
-{
+    if (q->start == q->end)
+    {
+        on_illegal_operation();
+        return *q->start;
+    }
+    else
+    {
+        unsigned char temp;
+        temp = *q->start;
+        q->start += sizeof(unsigned char);
+        return temp;
+    }
 }
 
 int main()
