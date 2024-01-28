@@ -15,6 +15,7 @@ public:
 
 void on_out_of_memory()
 {
+    cout<<"out of memory! please go and surrender the nearest police station."<<endl;
 }
 void on_illegal_operation()
 {
@@ -32,8 +33,16 @@ Q *create_queue()
 
 void enqueue_byte(Q *q, unsigned char b)
 {
-    *q->end = b;
-    q->end += sizeof(unsigned char);
+    if (q->length >= 2048)
+    {
+        on_out_of_memory();
+    }
+    else
+    {
+        *q->end = b;
+        q->end += sizeof(unsigned char);
+        q->length += 1;
+    }
 }
 void destroy_queue(Q *q)
 {
@@ -41,7 +50,7 @@ void destroy_queue(Q *q)
 }
 unsigned char dequeue_byte(Q *q)
 {
-    if (q->start == q->end)
+    if (q->length == 0)
     {
         on_illegal_operation();
         return *q->start;
@@ -51,6 +60,7 @@ unsigned char dequeue_byte(Q *q)
         unsigned char temp;
         temp = *q->start;
         q->start += sizeof(unsigned char);
+        q->length -= 1;
         return temp;
     }
 }
@@ -64,15 +74,15 @@ int main()
     enqueue_byte(q1, 3);
     enqueue_byte(q0, 2);
     enqueue_byte(q1, 4);
-    printf("%d", dequeue_byte(q0));
+    printf("%d ", dequeue_byte(q0));
     printf("%d\n", dequeue_byte(q0));
     enqueue_byte(q0, 5);
     enqueue_byte(q1, 6);
-    printf("%d", dequeue_byte(q0));
+    printf("%d ", dequeue_byte(q0));
     printf("%d\n", dequeue_byte(q0));
     destroy_queue(q0);
-    printf("%d", dequeue_byte(q1));
-    printf("%d", dequeue_byte(q1));
+    printf("%d ", dequeue_byte(q1));
+    printf("%d ", dequeue_byte(q1));
     printf("%d\n", dequeue_byte(q1));
     destroy_queue(q1);
 }
