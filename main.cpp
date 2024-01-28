@@ -1,17 +1,7 @@
 #include <iostream>
+#define MEMORY_LIMIT 2048
 
 using namespace std;
-
-class Q
-{
-public:
-    unsigned char data[2048];
-    unsigned char *start;
-    unsigned char *end;
-    unsigned char *start_of_array = &data[0];
-    unsigned char *end_of_array = &data[2047];
-    unsigned int length;
-};
 
 void on_out_of_memory()
 {
@@ -24,101 +14,112 @@ void on_illegal_operation()
     abort();
 }
 
-Q *create_queue()
+class Q
 {
-    Q *temp_queue = new Q;
-    temp_queue->start = &temp_queue->data[0];
-    temp_queue->end = &temp_queue->data[0];
-    temp_queue->length = 0;
-    return temp_queue;
-}
+public:
+    unsigned char data[MEMORY_LIMIT];
+    unsigned char *start;
+    unsigned char *end;
+    unsigned char *start_of_array = &data[0];
+    unsigned char *end_of_array = &data[MEMORY_LIMIT - 1];
+    unsigned int length = 0;
 
-void enqueue_byte(Q *q, unsigned char b)
-{
-    if (q->length >= 2048)
+    Q() // This replaces create_queue()
     {
-        on_out_of_memory();
+        this->start = this->start_of_array;
+        this->end = this->start_of_array;
     }
-    else
+
+    void enqueue_byte(unsigned char b) // This replaces enqueue_bye(Q* q, unsigned char b)
     {
-        *q->end = b;
-        if (q->end == q->end_of_array)
+        if (this->length >= MEMORY_LIMIT)
         {
-            q->end = q->start_of_array;
+            on_out_of_memory();
         }
         else
         {
-            q->end += sizeof(unsigned char);
+            *this->end = b;
+            if (this->end == this->end_of_array)
+            {
+                this->end = this->start_of_array;
+            }
+            else
+            {
+                this->end += sizeof(unsigned char);
+            }
+            this->length += 1;
         }
-        q->length += 1;
     }
-}
-void destroy_queue(Q *q)
-{
-    q->~Q();
-}
-unsigned char dequeue_byte(Q *q)
-{
-    if (q->length == 0)
-    {
-        on_illegal_operation();
-        return *q->start;
-    }
-    else
-    {
 
-        unsigned char temp;
-        temp = *q->start;
-        if (q->start == q->end_of_array)
+    unsigned char dequeue_byte() // This replaces dequeue_bye(Q* q)
+    {
+        if (this->length == 0)
         {
-            q->start = q->start_of_array;
+            on_illegal_operation();
+            return 0; //Previous function aborts anyway, this is only to make compiler happy
         }
         else
         {
-            q->start += sizeof(unsigned char);
-        }
 
-        q->length -= 1;
-        return temp;
+            unsigned char temp;
+            temp = *this->start;
+            if (this->start == this->end_of_array)
+            {
+                this->start = this->start_of_array;
+            }
+            else
+            {
+                this->start += sizeof(unsigned char);
+            }
+
+            this->length -= 1;
+            return temp;
+        }
     }
-}
+
+    ~Q() // This replaces destroy_queue(Q* q);
+    {
+        cout << "Queue destroyed" << endl;
+    }
+};
+
+
+
 
 int main()
 {
-    Q *q0 = create_queue();
-    enqueue_byte(q0, 0);
-    enqueue_byte(q0, 1);
-    Q *q1 = create_queue();
-    enqueue_byte(q1, 3);
-    enqueue_byte(q0, 2);
-    enqueue_byte(q1, 4);
-    printf("%d ", dequeue_byte(q0));
-    printf("%d\n", dequeue_byte(q0));
-    enqueue_byte(q0, 5);
-    enqueue_byte(q1, 6);
-    printf("%d ", dequeue_byte(q0));
-    printf("%d\n", dequeue_byte(q0));
-    destroy_queue(q0);
-    printf("%d ", dequeue_byte(q1));
-    printf("%d ", dequeue_byte(q1));
-    printf("%d\n", dequeue_byte(q1));
-    destroy_queue(q1);
+    Q q0 = Q();
+    q0.enqueue_byte(0);
+    q0.enqueue_byte(1);
+    Q q1 = Q();
+    q1.enqueue_byte(3);
+    q0.enqueue_byte(2);
+    q1.enqueue_byte(4);
+    printf("%d ", q0.dequeue_byte());
+    printf("%d\n", q0.dequeue_byte());
+    q0.enqueue_byte(5);
+    q1.enqueue_byte(6);
+    printf("%d ", q0.dequeue_byte());
+    printf("%d\n", q0.dequeue_byte());
+    printf("%d ", q1.dequeue_byte());
+    printf("%d ", q1.dequeue_byte());
+    printf("%d\n", q1.dequeue_byte());
 }
 
 /*
 The problem is to write a set of functions to manage a variable number of byte queues, each with variable length, in a small, fixed amount of memory. You should provide implementations of the following four functions:
 
-Q *create_queue(); // Creates a FIFO byte queue, returning a handle to it.
+Q *new Q(); // Creates a FIFO byte queue, returning a handle to it.
 void destroy_queue(Q *q); // Destroy an earlier created byte queue.
 void enqueue_byte(Q *q, unsigned char b); // Adds a new byte to a queue.
 unsigned char dequeue_byte(Q *q); // Pops the next byte off the FIFO queue.
 
 So, the output from the following set of calls:
 
-Q *q0 = create_queue();
+Q *q0 = new Q();
 enqueue_byte(q0, 0);
 enqueue_byte(q0, 1);
-Q *q1 = create_queue();
+Q *q1 = new Q();
 enqueue_byte(q1, 3);
 enqueue_byte(q0, 2);
 enqueue_byte(q1, 4);
@@ -145,7 +146,7 @@ You can define the type Q to be whatever you want.
 Your code is not allowed to call malloc() or other heap management routines.
 Instead, all storage (other than local variables in your functions) must be within a provided array:
 
-unsigned char data[2048];
+unsigned char data[MEMORY_LIMIT];
 
 Memory efficiency is important. On average while your system is running, there will be about 15 queues with an average of 80 or so bytes in each queue. Your functions may be asked to create a larger number of queues with less bytes in each. Your functions may be asked to create a smaller number of queues with more bytes in each.
 
