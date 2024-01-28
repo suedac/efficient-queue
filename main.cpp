@@ -8,14 +8,14 @@ public:
     unsigned char data[2048];
     unsigned char *start;
     unsigned char *end;
-    const unsigned char *start_of_array = &data[0];
-    const unsigned char *end_of_array = &data[2047];
+    unsigned char *start_of_array = &data[0];
+    unsigned char *end_of_array = &data[2047];
     unsigned int length;
 };
 
 void on_out_of_memory()
 {
-    cout<<"Error! Out of memory!"<<endl;
+    cout << "Error! Out of memory!" << endl;
     abort();
 }
 void on_illegal_operation()
@@ -42,7 +42,14 @@ void enqueue_byte(Q *q, unsigned char b)
     else
     {
         *q->end = b;
-        q->end += sizeof(unsigned char);
+        if (q->end == q->end_of_array)
+        {
+            q->end = q->start_of_array;
+        }
+        else
+        {
+            q->end += sizeof(unsigned char);
+        }
         q->length += 1;
     }
 }
@@ -59,9 +66,18 @@ unsigned char dequeue_byte(Q *q)
     }
     else
     {
+
         unsigned char temp;
         temp = *q->start;
-        q->start += sizeof(unsigned char);
+        if (q->start == q->end_of_array)
+        {
+            q->start = q->start_of_array;
+        }
+        else
+        {
+            q->start += sizeof(unsigned char);
+        }
+
         q->length -= 1;
         return temp;
     }
