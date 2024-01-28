@@ -15,11 +15,13 @@ public:
 
 void on_out_of_memory()
 {
-    cout<<"out of memory! please go and surrender the nearest police station."<<endl;
+    cout<<"Error! Out of memory!"<<endl;
+    abort();
 }
 void on_illegal_operation()
 {
-    cout << "bonk! straight to gulag" << endl;
+    cout << "Error! Illegal operation!" << endl;
+    abort();
 }
 
 Q *create_queue()
