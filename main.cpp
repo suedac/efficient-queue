@@ -2,6 +2,7 @@
 #include <vector>
 
 #define MAX_MEMORY 2048
+#define CHUNK_SIZE 8
 unsigned char data[MAX_MEMORY] = {0}; // Total Memory
 typedef void Q;
 
@@ -23,23 +24,98 @@ void initialize_memory() {
 }
 
 void print_memory() {
-  for (int i = 0; i < MAX_MEMORY / PAGE_SIZE; i++) {
-    for (int j = 0; j < PAGE_SIZE; j++) {
-      std::cout << data[i * j];
+  // For debugging purposes, use when MAX_MEMORY is something low like 32
+  for (int i = 0; i < MAX_MEMORY; i++) {
+    std::cout << data[i] << " ";
+  }
+}
+
+void create_chunk(unsigned char *current_pointer) {
+  // This function is called to an empty byte,
+  // Creates the neccessary data structures for holding the chunk
+  // First byte     -> Length of the chunk itself
+  // Second byte    -> Length of the string of actual values within the chunk
+  // (E.g. a chunk might be 16 bytes to provide some free space, but we might
+  // have 5 bytes of actual data)
+  // Last two bytes -> Next linked chunk's address, or FF if it's the last chunk
+
+  // ----0000000000------------
+
+  auto start_pointer = current_pointer;
+  // Offset for the 2 starter and 2 ender bytes of chunks
+  current_pointer += 4;
+  for (int i = 0; i < CHUNK_SIZE; i++) {
+    if (*current_pointer == 0) {
+      current_pointer++;
+      continue;
+    } else {
+      // Set first byte -> Lenth of the chunk itself
+      *start_pointer = i - 1;
+      // Second byte (len of actual values) is already 0, so we can skip it
     }
-    std::cout << " ";
   }
 }
 
 Q *create_queue() {
+  unsigned char *que_ptr = data;
+  // unsigned char first_2_bytes[] = {data[0], data[1]};
 
+  // Possible undefined behaviour
+  short *startIndex = reinterpret_cast<short int *>(data);
+
+  que_ptr += (*startIndex) * sizeof(unsigned char);
+  create_chunk(que_ptr);
+  return que_ptr;
 }
 
+bool is_chunk_full(short chunk) {
+  short *empty_space_index = reinterpret_cast<short *>(q);
 
+  short *last_index =
+      reinterpret_cast<short *>(empty_space_index + sizeof(empty_space_index));
+  return *last_index == *empty_space_index;
+}
 
-void enqueue_byte(Q *q, unsigned char b) {}
+// Traverse linked chunks to find last chunk
+short traverse_chunk(short chunk) {
+  short *ptr_to_first_chunk = reinterpret_cast<short *>(chunk);
+  short *next_chunk_index =
+      reinterpret_cast<short *>(data[*ptr_to_first_chunk + 2]);
+  if (*next_chunk_index == 0)
+    return chunk;
+  else
+    return traverse_chunk(*next_chunk_index);
+}
+
+void enqueue_byte(Q *q, unsigned char b) {
+  // Get first chunk index 
+  short *first_chunk_index = reinterpret_cast<short *>(q);
+  
+  // Get last chunk
+  short last_chunk_index = traverse_chunk(*first_chunk_index);
+
+  if (!is_chunk_full(last_chunk_index)) {
+    short *empty_space_index = reinterpret_cast<short *>(q);
+    data[*empty_space_index] = b;
+    *empty_space_index += 1;
+  } else {
+    // Chunk is full here so we need to create a new chunk
+    short *startIndex = reinterpret_cast<short int *>(data);
+    unsigned char *que_ptr = data;
+    que_ptr += (*startIndex) * sizeof(unsigned char);
+    create_chunk(que_ptr);
+    // add value to the new chunk
+  }
+
+  // check if current chunk has space
+  // if chunk full, create new chunk
+  // if chunk not full, add value to chunk
+}
 void destroy_queue(Q *q) {}
-unsigned char dequeue_byte(Q *q) {}
+unsigned char dequeue_byte(Q *q) {
+  // check the last chunk
+  // pop the value out of the
+}
 
 int main() {
   Q *q0 = create_queue();
