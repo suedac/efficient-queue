@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
 
-#define MAX_MEMORY 2048
+#define MAX_MEMORY 128
 #define CHUNK_SIZE 8
 unsigned char data[MAX_MEMORY] = {0}; // Total Memory
 typedef void Q;
@@ -25,12 +25,16 @@ void initialize_memory() {
 
 void print_memory() {
   // For debugging purposes, use when MAX_MEMORY is something low like 32
+  uint16_t *first_empty_index = reinterpret_cast<uint16_t *>(data);
+  printf("\n %d\n", *first_empty_index);
   for (int i = 0; i < MAX_MEMORY; i++) {
-    std::cout << data[i] << " ";
+    printf("%d /", data[i]);
   }
+
+  printf("\n----------------\n");
 }
 
-short create_chunk() {
+uint16_t create_chunk() {
   // This function is called to an empty byte,
   // Creates the neccessary data structures for holding the chunk
   // First byte     -> Length of the chunk itself, including control bytes
@@ -44,8 +48,8 @@ short create_chunk() {
   // upon them
 
   // Get start index by converting the first two bytes of the array to short int
-  short *first_empty_index = reinterpret_cast<short *>(data);
-  short start_index = *first_empty_index;
+  uint16_t *first_empty_index = reinterpret_cast<uint16_t *>(&data);
+  uint16_t start_index = *first_empty_index;
 
   for (int i = 0; i < CHUNK_SIZE; i++) {
     if (data[start_index + i] == 0) {
@@ -56,11 +60,10 @@ short create_chunk() {
       // can skip it
       data[start_index] = i;
       // Assuming this is the last chunk for now
-      data[i - 2] = 0xF;
-      data[i - 1] = 0xF;
-      exit(-31);
+      data[start_index + i - 2] = 0xFF;
+      data[start_index + i - 1] = 0xFF;
       return start_index;
-      // TODO find_next_free_space()
+      // TODO handle finding next free space
     }
   }
   // If we didn't return in the previous loop
@@ -68,11 +71,16 @@ short create_chunk() {
   // Still, check the next 8 just in case
   for (int i = 0; i < 8; i++) {
     if (data[start_index + CHUNK_SIZE + i] != 0) {
-      // TODO find_next_free_space()
+      // TODO handle if there's not enough space in front
       exit(-31);
     }
   }
+  data[start_index + CHUNK_SIZE - 2] = 0xFF;
+  data[start_index + CHUNK_SIZE - 1] = 0xFF;
+  data[start_index] = CHUNK_SIZE;
   *first_empty_index = start_index + CHUNK_SIZE;
+  std::cout << std::endl;
+
   return start_index;
 }
 
@@ -80,40 +88,50 @@ Q *create_queue() {
 
   // Possible undefined behaviour
   // get the first empty index from first 2 bytes of the data;
-  short *first_empty_index = reinterpret_cast<short *>(data);
+  uint16_t *first_empty_index = reinterpret_cast<uint16_t *>(data);
 
+  uint16_t index = *first_empty_index;
   // Create queue (store index of first related chunk)
-  Q *queue = reinterpret_cast<Q *>(data[*first_empty_index]);
+  uint16_t *queue = reinterpret_cast<uint16_t *>(data + index);
 
   // Update the firts empty index
+
   *first_empty_index = *first_empty_index + 2 * sizeof(unsigned char);
 
-  short x = create_chunk();
-  short *temp = reinterpret_cast<short *>(data[*first_empty_index]);
-  *temp = x;
+  uint16_t x = create_chunk();
+  *queue = x;
 
   return queue;
 }
 
-bool is_chunk_full(short chunk) {
-  short *empty_space_index = reinterpret_cast<short *>(q);
-
-  short *last_index =
-      reinterpret_cast<short *>(empty_space_index + sizeof(empty_space_index));
-  return *last_index == *empty_space_index;
+bool is_chunk_full(uint16_t chunk_index) {
+  return data[chunk_index + 1] >= data[chunk_index] - 4;
 }
 
 // Traverse linked chunks to find last chunk
-short traverse_chunk(short chunk) {
-  short *ptr_to_first_chunk = reinterpret_cast<short *>(chunk);
-  short *next_chunk_index =
-      reinterpret_cast<short *>(data[*ptr_to_first_chunk + 2]);
-  if (*next_chunk_index == 0)
-    return chunk;
+
+uint16_t traverse_chunk(uint16_t chunk_index) {
+
+  const unsigned char chunkLength = data[chunk_index];
+
+  const uint16_t index = chunk_index + chunkLength - 2;
+  const uint16_t next_chunk_index = *reinterpret_cast<uint16_t *>(&data[index]);
+  if (next_chunk_index == 65535)
+    return chunk_index;
   else
-    return traverse_chunk(*next_chunk_index);
+    return traverse_chunk(next_chunk_index);
 }
 
+bool can_chunk_expand(uint16_t chunk_index) {
+  uint16_t chunk_size = data[chunk_index];
+  return data[chunk_index + chunk_size + 1] == 0 && chunk_size < 255;
+}
+void expand_chunk(uint16_t chunk_index) {
+  uint16_t chunk_size = data[chunk_index];
+  data[chunk_index]++;
+  data[chunk_index + chunk_size] = data[chunk_index + chunk_size - 1];
+  data[chunk_index + chunk_size - 1] = data[chunk_index + chunk_size - 2];
+}
 void enqueue_byte(Q *q, unsigned char b) {
 
   // Get first chunk inde
@@ -151,11 +169,23 @@ void enqueue_byte(Q *q, unsigned char b) {
 }
 void destroy_queue(Q *q) {}
 unsigned char dequeue_byte(Q *q) {
-  // check the last chunk
+  uint16_t first_chunk_index = *reinterpret_cast<uint16_t *>(q);
+  unsigned char value = data[first_chunk_index + 2];
+  data[first_chunk_index + 2] = data[first_chunk_index + 1];
+  data[first_chunk_index + 1] = data[first_chunk_index];
+  data[first_chunk_index] = 0;
+  data[first_chunk_index + 1]--;
+  data[first_chunk_index + 2]--;
+  uint16_t *ref = reinterpret_cast<uint16_t *>(q);
+  *ref += 1;
+
+  // check the first chunk
   // pop the value out of the
+  return value;
 }
 
 int main() {
+  initialize_memory();
   Q *q0 = create_queue();
   enqueue_byte(q0, 0);
   enqueue_byte(q0, 1);
@@ -163,15 +193,15 @@ int main() {
   enqueue_byte(q1, 3);
   enqueue_byte(q0, 2);
   enqueue_byte(q1, 4);
-  printf("%d", dequeue_byte(q0));
+  printf("%d ", dequeue_byte(q0));
   printf("%d\n", dequeue_byte(q0));
   enqueue_byte(q0, 5);
   enqueue_byte(q1, 6);
-  printf("%d", dequeue_byte(q0));
+  printf("%d ", dequeue_byte(q0));
   printf("%d\n", dequeue_byte(q0));
   destroy_queue(q0);
-  printf("%d", dequeue_byte(q1));
-  printf("%d", dequeue_byte(q1));
+  printf("%d ", dequeue_byte(q1));
+  printf("%d ", dequeue_byte(q1));
   printf("%d\n", dequeue_byte(q1));
   destroy_queue(q1);
 }
@@ -179,7 +209,7 @@ int main() {
 /*
 The problem is to write a set of functions to manage a variable number of byte
 queues, each with variable length, in a small, fixed amount of memory. You
-should provide implementations of the following four functions:
+should provide implementations of the following four function        s:
 
 Q *create_queue(); // Creates a FIFO byte queue, returning a handle to it.
 void destroy_queue(Q *q); // Destroy an earlier created byte queue.
