@@ -115,23 +115,34 @@ short traverse_chunk(short chunk) {
 }
 
 void enqueue_byte(Q *q, unsigned char b) {
-  // Get first chunk index 
-  short *first_chunk_index = reinterpret_cast<short *>(q);
-  
+
+  // Get first chunk inde
+  uint16_t *first_chunk_index = reinterpret_cast<uint16_t *>(q);
+
   // Get last chunk
-  short last_chunk_index = traverse_chunk(*first_chunk_index);
+  uint16_t last_chunk_index = traverse_chunk(*first_chunk_index);
 
   if (!is_chunk_full(last_chunk_index)) {
-    short *empty_space_index = reinterpret_cast<short *>(q);
-    data[*empty_space_index] = b;
-    *empty_space_index += 1;
+    unsigned char *empty_space_index =
+        reinterpret_cast<unsigned char *>(&data[last_chunk_index]);
+    uint16_t temp = *(empty_space_index + 1) + 2 + *first_chunk_index;
+    data[temp] = b;
+    *(empty_space_index + 1) += 1;
   } else {
-    // Chunk is full here so we need to create a new chunk
-    short *startIndex = reinterpret_cast<short int *>(data);
-    unsigned char *que_ptr = data;
-    que_ptr += (*startIndex) * sizeof(unsigned char);
-    create_chunk(que_ptr);
-    // add value to the new chunk
+    if (can_chunk_expand(last_chunk_index)) {
+      expand_chunk(last_chunk_index);
+      unsigned char *empty_space_index =
+          reinterpret_cast<unsigned char *>(&data[last_chunk_index]);
+      uint16_t temp = *(empty_space_index + 1) + 2 + *first_chunk_index;
+      data[temp] = b;
+      *(empty_space_index + 1) += 1;
+    } else {
+      // Chunk is full here so we need to create a new chunk
+      // TODO
+      exit(-31);
+      // uint16_t next_chunk_index = create_chunk();
+      // add value to the new chunk
+    }
   }
 
   // check if current chunk has space
