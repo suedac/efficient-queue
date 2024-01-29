@@ -29,6 +29,17 @@ void on_illegal_operation()
 
 void defrag();
 
+void print_memory() {
+    for (int i = 0; i < MAX_MEMORY / PAGE_SIZE; i++)
+    {
+        for (int j = 0; j < PAGE_SIZE; j++)
+        {
+            std::cout << data[i*j];
+        }
+        std::cout << std::endl;
+    }
+}
+
 Q *create_queue()
 {
     Q temp_queue = Q();
@@ -74,6 +85,7 @@ int main()
     Q *q0 = create_queue();
     enqueue_byte(q0, 0);
     enqueue_byte(q0, 1);
+    
     Q *q1 = create_queue();
     enqueue_byte(q1, 3);
     enqueue_byte(q0, 2);
