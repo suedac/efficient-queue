@@ -30,42 +30,53 @@ void print_memory() {
   }
 }
 
-void create_chunk(unsigned char *current_pointer) {
+short create_chunk(short current_index) {
   // This function is called to an empty byte,
   // Creates the neccessary data structures for holding the chunk
-  // First byte     -> Length of the chunk itself
-  // Second byte    -> Length of the string of actual values within the chunk
+  // First byte     -> Length of the chunk itself, including control bytes
+  // Second byte    -> Length of the string of actual values within the ch  unk
   // (E.g. a chunk might be 16 bytes to provide some free space, but we might
   // have 5 bytes of actual data)
   // Last two bytes -> Next linked chunk's address, or FF if it's the last chunk
+  // Returns the index of the first byte of the chunk
 
-  // ----0000000000------------
+  // TODO: Invert the bits of first bytes so searching for 0 doesn't stumble
+  // upon them
 
-  auto start_pointer = current_pointer;
-  // Offset for the 2 starter and 2 ender bytes of chunks
-  current_pointer += 4;
+  auto start_index = current_index;
+
   for (int i = 0; i < CHUNK_SIZE; i++) {
-    if (*current_pointer == 0) {
-      current_pointer++;
+    if (data[i] == 0) {
       continue;
     } else {
       // Set first byte -> Lenth of the chunk itself
-      *start_pointer = i - 1;
+      data[start_index] = i;
       // Second byte (len of actual values) is already 0, so we can skip it
+      return start_index;
     }
   }
+  // TODO what happens if not enough size 
 }
 
 Q *create_queue() {
-  unsigned char *que_ptr = data;
-  // unsigned char first_2_bytes[] = {data[0], data[1]};
-
+  
   // Possible undefined behaviour
-  short *startIndex = reinterpret_cast<short int *>(data);
+  // get the first empty index from first 2 bytes of the data;
+  short *first_empty_index = reinterpret_cast<short *>(data);
 
-  que_ptr += (*startIndex) * sizeof(unsigned char);
-  create_chunk(que_ptr);
-  return que_ptr;
+  // Create queue (store index of first related chunk)
+  Q *queue = reinterpret_cast<Q *>(data[*first_empty_index]);
+
+  // Update the firts empty index
+  *first_empty_index = *first_empty_index + 2 * sizeof(unsigned char);
+
+  // Fix this abomination
+
+  short x = create_chunk(*first_empty_index);
+  short *temp = reinterpret_cast<short *>(data[*first_empty_index]);
+  *temp = x;
+
+  return queue;
 }
 
 bool is_chunk_full(short chunk) {
