@@ -1,86 +1,72 @@
 #include <iostream>
+#include <vector>
 
-using namespace std;
+#define MAX_MEMORY 2048
+int PAGE_SIZE = 16; // This is not a #define as this will be dynamically adjusted later
 
-class Q
+unsigned char data[MAX_MEMORY]; // Total Memory
+unsigned char *first_empty = &data[0];
+
+struct Q
 {
-public:
-    unsigned char data[2048];
     unsigned char *start;
     unsigned char *end;
-    unsigned char *start_of_array = &data[0];
-    unsigned char *end_of_array = &data[2047];
-    unsigned int length;
+    int size = 0;
 };
+
+std::vector<Q> queue_objects;
 
 void on_out_of_memory()
 {
-    cout << "Error! Out of memory!" << endl;
+    std::cout << "Error! Out of memory!" << std::endl;
     abort();
 }
 void on_illegal_operation()
 {
-    cout << "Error! Illegal operation!" << endl;
+    std::cout << "Error! Illegal operation!" << std::endl;
     abort();
 }
 
+void defrag();
+
 Q *create_queue()
 {
-    Q *temp_queue = new Q;
-    temp_queue->start = &temp_queue->data[0];
-    temp_queue->end = &temp_queue->data[0];
-    temp_queue->length = 0;
-    return temp_queue;
+    Q temp_queue = Q();
+    if (queue_objects.empty())
+    {
+        temp_queue.start = &data[0];
+        temp_queue.end = &data[0];
+        queue_objects.push_back(temp_queue);
+    }
+    // This loop looks for empty space between adjacent queues
+    for (int i = 0; i < queue_objects.size() - 1; i++)
+    {
+        // If there's more than PAGE_SIZE difference between two adjacent queues
+        if ((queue_objects[i + 1].start - queue_objects[i].end) > PAGE_SIZE)
+        {
+            //Put the new queue right next to the first one
+            temp_queue.start = queue_objects[i].end + (int(queue_objects[i].end) & PAGE_SIZE); 
+        }
+    }
+    // If there's no empty space found between queues, we need to add to end
+    if((MAX_MEMORY - int(queue_objects.back().end)) > PAGE_SIZE) 
+    {
+        temp_queue.start = queue_objects.back().end + (int(queue_objects.back().end) & PAGE_SIZE);
+        temp_queue.end = temp_queue.start;
+    }
+    else {
+        defrag();
+    } 
 }
 
 void enqueue_byte(Q *q, unsigned char b)
 {
-    if (q->length >= 2048)
-    {
-        on_out_of_memory();
-    }
-    else
-    {
-        *q->end = b;
-        if (q->end == q->end_of_array)
-        {
-            q->end = q->start_of_array;
-        }
-        else
-        {
-            q->end += sizeof(unsigned char);
-        }
-        q->length += 1;
-    }
 }
 void destroy_queue(Q *q)
 {
-    q->~Q();
 }
 unsigned char dequeue_byte(Q *q)
 {
-    if (q->length == 0)
-    {
-        on_illegal_operation();
-        return *q->start;
-    }
-    else
-    {
-
-        unsigned char temp;
-        temp = *q->start;
-        if (q->start == q->end_of_array)
-        {
-            q->start = q->start_of_array;
-        }
-        else
-        {
-            q->start += sizeof(unsigned char);
-        }
-
-        q->length -= 1;
-        return temp;
-    }
 }
 
 int main()
