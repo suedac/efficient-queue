@@ -30,7 +30,7 @@ void print_memory() {
   }
 }
 
-short create_chunk(short current_index) {
+short create_chunk() {
   // This function is called to an empty byte,
   // Creates the neccessary data structures for holding the chunk
   // First byte     -> Length of the chunk itself, including control bytes
@@ -43,23 +43,41 @@ short create_chunk(short current_index) {
   // TODO: Invert the bits of first bytes so searching for 0 doesn't stumble
   // upon them
 
-  auto start_index = current_index;
+  // Get start index by converting the first two bytes of the array to short int
+  short *first_empty_index = reinterpret_cast<short *>(data);
+  short start_index = *first_empty_index;
 
   for (int i = 0; i < CHUNK_SIZE; i++) {
-    if (data[i] == 0) {
+    if (data[start_index + i] == 0) {
       continue;
     } else {
       // Set first byte -> Lenth of the chunk itself
+      // Second byte (len of actual values) is already 0 for new chunks, so we
+      // can skip it
       data[start_index] = i;
-      // Second byte (len of actual values) is already 0, so we can skip it
+      // Assuming this is the last chunk for now
+      data[i - 2] = 0xF;
+      data[i - 1] = 0xF;
+      exit(-31);
       return start_index;
+      // TODO find_next_free_space()
     }
   }
-  // TODO what happens if not enough size 
+  // If we didn't return in the previous loop
+  // that means we had an 16 byte free chunk
+  // Still, check the next 8 just in case
+  for (int i = 0; i < 8; i++) {
+    if (data[start_index + CHUNK_SIZE + i] != 0) {
+      // TODO find_next_free_space()
+      exit(-31);
+    }
+  }
+  *first_empty_index = start_index + CHUNK_SIZE;
+  return start_index;
 }
 
 Q *create_queue() {
-  
+
   // Possible undefined behaviour
   // get the first empty index from first 2 bytes of the data;
   short *first_empty_index = reinterpret_cast<short *>(data);
@@ -70,9 +88,7 @@ Q *create_queue() {
   // Update the firts empty index
   *first_empty_index = *first_empty_index + 2 * sizeof(unsigned char);
 
-  // Fix this abomination
-
-  short x = create_chunk(*first_empty_index);
+  short x = create_chunk();
   short *temp = reinterpret_cast<short *>(data[*first_empty_index]);
   *temp = x;
 
