@@ -27,7 +27,9 @@ void on_illegal_operation()
     abort();
 }
 
-void defrag();
+void defrag(){
+    
+}
 
 void print_memory() {
     for (int i = 0; i < MAX_MEMORY / PAGE_SIZE; i++)
@@ -48,6 +50,7 @@ Q *create_queue()
         temp_queue.start = &data[0];
         temp_queue.end = &data[0];
         queue_objects.push_back(temp_queue);
+        return &queue_objects[0];
     }
     // This loop looks for empty space between adjacent queues
     for (int i = 0; i < queue_objects.size() - 1; i++)
@@ -56,13 +59,13 @@ Q *create_queue()
         if ((queue_objects[i + 1].start - queue_objects[i].end) > PAGE_SIZE)
         {
             //Put the new queue right next to the first one
-            temp_queue.start = queue_objects[i].end + (int(queue_objects[i].end) & PAGE_SIZE); 
+            temp_queue.start = queue_objects[i].end + ((uintptr_t)queue_objects[i].end & PAGE_SIZE); 
         }
     }
     // If there's no empty space found between queues, we need to add to end
-    if((MAX_MEMORY - int(queue_objects.back().end)) > PAGE_SIZE) 
+    if((MAX_MEMORY - (uintptr_t)queue_objects.back().end) > PAGE_SIZE) 
     {
-        temp_queue.start = queue_objects.back().end + (int(queue_objects.back().end) & PAGE_SIZE);
+        temp_queue.start = queue_objects.back().end + ((uintptr_t)queue_objects.back().end & PAGE_SIZE);
         temp_queue.end = temp_queue.start;
     }
     else {
@@ -72,6 +75,10 @@ Q *create_queue()
 
 void enqueue_byte(Q *q, unsigned char b)
 {
+    // Get the position of current queue in the queue_objects vector
+    // So that we can check for next queue's start position
+
+    
 }
 void destroy_queue(Q *q)
 {
@@ -83,6 +90,10 @@ unsigned char dequeue_byte(Q *q)
 int main()
 {
     Q *q0 = create_queue();
+    queue_objects[0].size = 5;
+    std::cout << queue_objects[0].size << std::endl;
+    q0->size = 6;
+    std::cout << queue_objects[0].size << std::endl;
     enqueue_byte(q0, 0);
     enqueue_byte(q0, 1);
     
