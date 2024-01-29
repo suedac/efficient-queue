@@ -1,8 +1,8 @@
 #include <iostream>
 #include <vector>
 
-#define MAX_MEMORY 2048
-int PAGE_SIZE = 16; // This is not a #define as this will be dynamically adjusted later
+#define MAX_MEMORY 32
+int PAGE_SIZE = 8; // This is not a #define as this will be dynamically adjusted later
 
 unsigned char data[MAX_MEMORY]; // Total Memory
 unsigned char *first_empty = &data[0];
@@ -28,7 +28,7 @@ void on_illegal_operation()
 }
 
 void defrag(){
-    
+
 }
 
 void print_memory() {
@@ -38,7 +38,7 @@ void print_memory() {
         {
             std::cout << data[i*j];
         }
-        std::cout << std::endl;
+        std::cout << " ";
     }
 }
 
@@ -50,7 +50,7 @@ Q *create_queue()
         temp_queue.start = &data[0];
         temp_queue.end = &data[0];
         queue_objects.push_back(temp_queue);
-        return &queue_objects[0];
+        return &temp_queue;
     }
     // This loop looks for empty space between adjacent queues
     for (int i = 0; i < queue_objects.size() - 1; i++)
@@ -58,8 +58,10 @@ Q *create_queue()
         // If there's more than PAGE_SIZE difference between two adjacent queues
         if ((queue_objects[i + 1].start - queue_objects[i].end) > PAGE_SIZE)
         {
-            //Put the new queue right next to the first one
+            //Put the new queue right next to the left one
             temp_queue.start = queue_objects[i].end + ((uintptr_t)queue_objects[i].end & PAGE_SIZE); 
+            queue_objects.insert(queue_objects.begin() + i+1, temp_queue);
+            return &temp_queue;
         }
     }
     // If there's no empty space found between queues, we need to add to end
@@ -74,10 +76,16 @@ Q *create_queue()
 }
 
 void enqueue_byte(Q *q, unsigned char b)
-{
-    // Get the position of current queue in the queue_objects vector
-    // So that we can check for next queue's start position
+{   
+    // Check if we're currently within our page bounds
+    if ((uintptr_t)queue_objects.back().end & PAGE_SIZE < PAGE_SIZE)
+    {
 
+    }
+    else // If not, we need to check if the next byte belongs to some other queue
+    {
+
+    }
     
 }
 void destroy_queue(Q *q)
