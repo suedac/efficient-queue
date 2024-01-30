@@ -16,7 +16,7 @@ uint16_t create_chunk();
 Q *create_queue();
 bool is_chunk_full(uint16_t chunk_index);
 bool can_chunk_expand(uint16_t chunk_index);
-void expand_chunk(uint16_t chunk_index);
+bool expand_chunk(uint16_t chunk_index);
 void enqueue_byte(Q *q, unsigned char b);
 void delete_chunks_recursive(uint16_t chunk_index);
 void destroy_queue(Q *q);
@@ -169,53 +169,62 @@ bool can_chunk_expand(uint16_t chunk_index) {
   return data[chunk_index + chunk_size + 1] == 0 && chunk_size < 255;
 }
 
-void expand_chunk(uint16_t chunk_index) {
+bool expand_chunk(uint16_t chunk_index) {
   uint16_t chunk_size = data[chunk_index];
 
+  // Check if there is enough space in the data array to expand
   if (chunk_index + chunk_size < MAX_MEMORY) {
+    // Check if the chunk is not already at the maximum size
     if (chunk_size < 255) {
       data[chunk_index]++;
       data[chunk_index + chunk_size] = data[chunk_index + chunk_size - 1];
       data[chunk_index + chunk_size - 1] = data[chunk_index + chunk_size - 2];
+      return true; // Expansion successful
     } else {
-      std::cout << "Error! Cannot expand chunk beyond maximum size." << std::endl;
-      on_illegal_operation();
+      // Handle the case when the chunk is already at the maximum size
+      std::cout << "Error! Cannot expand chunk beyond maximum size."
+                << std::endl;
+      return false; // Expansion failed
     }
   } else {
-    std::cout << "Error! Cannot expand chunk beyond data array boundaries." << std::endl;
-    on_illegal_operation();
+    // Handle the case when expanding would exceed the boundaries of the data
+    // array
+    std::cout << "Error! Cannot expand chunk beyond data array boundaries."
+              << std::endl;
+    return false; // Expansion failed
   }
 }
 
 void enqueue_byte(Q *q, unsigned char b) {
   is_q_pointer_valid(q);
-  // Get first chunk inde
-  uint16_t *first_chunk_index = reinterpret_cast<uint16_t *>(q);
 
-  // Get last chunk
+  uint16_t *first_chunk_index = reinterpret_cast<uint16_t *>(q);
   uint16_t last_chunk_index = traverse_chunk(*first_chunk_index);
 
   if (!is_chunk_full(last_chunk_index)) {
+    // Add the value to the current chunk
     unsigned char *empty_space_index =
         reinterpret_cast<unsigned char *>(&data[last_chunk_index]);
     uint16_t temp = *(empty_space_index + 1) + 2 + *first_chunk_index;
     data[temp] = b;
     *(empty_space_index + 1) += 1;
   } else {
-    if (!can_chunk_expand(last_chunk_index)) {
-      find_next_free_space();
+    // Try to expand the current chunk
+    if (can_chunk_expand(last_chunk_index) && expand_chunk(last_chunk_index)) {
+      // If expansion is successful, add the value to the expanded chunk
+      unsigned char *empty_space_index =
+          reinterpret_cast<unsigned char *>(&data[last_chunk_index]);
+      uint16_t temp = *(empty_space_index + 1) + 2 + *first_chunk_index;
+      data[temp] = b;
+      *(empty_space_index + 1) += 1;
+    } else {
+      create_chunk();
+      enqueue_byte(q, b);
     }
-    expand_chunk(last_chunk_index);
-    unsigned char *empty_space_index =
-        reinterpret_cast<unsigned char *>(&data[last_chunk_index]);
-    uint16_t temp = *(empty_space_index + 1) + 2 + *first_chunk_index;
-    data[temp] = b;
-    *(empty_space_index + 1) += 1;
   }
 }
 
 void delete_chunks_recursive(uint16_t chunk_index) {
-
   const unsigned char chunkLength = data[chunk_index];
 
   // Last two bytes holds the next chunk's address
