@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
 
-#define MAX_MEMORY 128
+#define MAX_MEMORY 2048
 #define CHUNK_SIZE 8
 unsigned char data[MAX_MEMORY] = {0}; // Total Memory
 typedef void Q;
@@ -113,7 +113,7 @@ Q *create_queue()
 
     uint16_t x = create_chunk();
     *queue = x;
-
+ 
     return queue;
 }
 
@@ -191,7 +191,9 @@ void enqueue_byte(Q *q, unsigned char b)
     // if chunk full, create new chunk
     // if chunk not full, add value to chunk
 }
-void destroy_queue(Q *q) {}
+void destroy_queue(Q *q) {
+
+}
 unsigned char dequeue_byte(Q *q)
 {
     uint16_t first_chunk_index = *reinterpret_cast<uint16_t *>(q);
