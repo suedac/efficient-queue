@@ -6,6 +6,43 @@
 unsigned char data[MAX_MEMORY] = {0}; // Total Memory
 
 typedef void Q;
+void on_out_of_memory();
+void on_illegal_operation();
+void is_q_pointer_valid(Q *q);
+void initialize_memory();
+void print_memory();
+uint16_t create_chunk();
+Q *create_queue();
+bool is_chunk_full(uint16_t chunk_index);
+bool can_chunk_expand(uint16_t chunk_index);
+void expand_chunk(uint16_t chunk_index);
+void enqueue_byte(Q *q, unsigned char b);
+void delete_chunks_recursive(uint16_t chunk_index);
+void destroy_queue(Q *q);
+unsigned char dequeue_byte(Q *q);
+
+int main() {
+  initialize_memory();
+  Q *q0 = create_queue();
+
+  enqueue_byte(q0, 0);
+  enqueue_byte(q0, 1);
+  Q *q1 = create_queue();
+  enqueue_byte(q1, 3);
+  enqueue_byte(q0, 2);
+  enqueue_byte(q1, 4);
+  printf("%d ", dequeue_byte(q0));
+  printf("%d\n", dequeue_byte(q0));
+  enqueue_byte(q0, 5);
+  enqueue_byte(q1, 6);
+  printf("%d ", dequeue_byte(q0));
+  printf("%d\n", dequeue_byte(q0));
+  destroy_queue(q0);
+  printf("%d ", dequeue_byte(q1));
+  printf("%d ", dequeue_byte(q1));
+  printf("%d\n", dequeue_byte(q1));
+  destroy_queue(q1);
+}
 
 void on_out_of_memory() {
   std::cout << "Error! Out of memory!" << std::endl;
@@ -17,6 +54,8 @@ void on_illegal_operation() {
 }
 
 void is_q_pointer_valid(Q *q) {
+  // Reminder - A Q pointer is just a 16 bit address to the
+  // first chunk of the queue. If it's 0, the Q was deletrd.
   uint16_t *first_chunk_index = reinterpret_cast<uint16_t *>(q);
   if (*first_chunk_index == 0) {
     on_illegal_operation();
@@ -227,29 +266,6 @@ unsigned char dequeue_byte(Q *q) {
   // check the first chunk
   // pop the value out of the
   return value;
-}
-
-int main() {
-  initialize_memory();
-  Q *q0 = create_queue();
-
-  enqueue_byte(q0, 0);
-  enqueue_byte(q0, 1);
-  Q *q1 = create_queue();
-  enqueue_byte(q1, 3);
-  enqueue_byte(q0, 2);
-  enqueue_byte(q1, 4);
-  printf("%d ", dequeue_byte(q0));
-  printf("%d\n", dequeue_byte(q0));
-  enqueue_byte(q0, 5);
-  enqueue_byte(q1, 6);
-  printf("%d ", dequeue_byte(q0));
-  printf("%d\n", dequeue_byte(q0));
-  destroy_queue(q0);
-  printf("%d ", dequeue_byte(q1));
-  printf("%d ", dequeue_byte(q1));
-  printf("%d\n", dequeue_byte(q1));
-  destroy_queue(q1);
 }
 
 /*
