@@ -82,3 +82,9 @@ But there were still some data I needed to know, like where is the first availab
 ![NEW CHUNK STRUCTURE](image-2.png)
 
 As you can see in the images, I mostly use 2 bytes for the location showing pointers, thats because we have 2048 bytes of space and one byte can hold maximum of 256 values(2^8) so we use 2 bytes to make it reach till the end of the memory(256*256). We use reinterpret_cast<uint16_t *> to trick c++ into read two bytes in one value. 
+
+I also would like to show how I traverse around the chunks of a queue.
+
+![How traversing inside chunk works](image-3.png)
+
+As you can see in the image, last two bytes of the chunk is reserved to traverse to the first bytes of the next chunk.
