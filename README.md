@@ -1,7 +1,8 @@
 # efficient-queue
 Efficien't queue implementation in C++
 The problem given:
-_The problem is to write a set of functions to manage a variable number of byte
+
+The problem is to write a set of functions to manage a variable number of byte
 queues, each with variable length, in a small, fixed amount of memory. You
 should provide implementations of the following four function
 
@@ -68,7 +69,7 @@ void on_illegal_operation();
 There may be spikes in the number of queues allocated, or in the size of an
 individual queue. Your code should not assume a maximum number of bytes in a
 queue (other than that imposed by the total amount of memory available, of
-course!) You can assume that no more than 64 queues will be created at once._
+course!) You can assume that no more than 64 queues will be created at once.
 
 At first look, I thought array(unsigned char data[2048]) was for each queue, but after finishing the code, I realized that given array was the whole memory we should use. So I deleted all the code inside the functions and started with a new algorithm:
 
@@ -78,5 +79,5 @@ I decided to use chunks of data and some pointers within each chunk. Using chunk
 
 But there were still some data I needed to know, like where is the first available place I can place my new chunk, and where my chunk starts. Also I should make them outside of the chunk itself so if my chunk got deleted, I wouldn't lose them. Let me show you the new style of the structure I made:
  
-![New chunk chart](image-1.png)
+![NEW CHUNK STRUCTURE](image-2.png)
 
