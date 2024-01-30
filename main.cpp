@@ -168,12 +168,25 @@ bool can_chunk_expand(uint16_t chunk_index) {
   uint16_t chunk_size = data[chunk_index];
   return data[chunk_index + chunk_size + 1] == 0 && chunk_size < 255;
 }
+
 void expand_chunk(uint16_t chunk_index) {
   uint16_t chunk_size = data[chunk_index];
-  data[chunk_index]++;
-  data[chunk_index + chunk_size] = data[chunk_index + chunk_size - 1];
-  data[chunk_index + chunk_size - 1] = data[chunk_index + chunk_size - 2];
+
+  if (chunk_index + chunk_size < MAX_MEMORY) {
+    if (chunk_size < 255) {
+      data[chunk_index]++;
+      data[chunk_index + chunk_size] = data[chunk_index + chunk_size - 1];
+      data[chunk_index + chunk_size - 1] = data[chunk_index + chunk_size - 2];
+    } else {
+      std::cout << "Error! Cannot expand chunk beyond maximum size." << std::endl;
+      on_illegal_operation();
+    }
+  } else {
+    std::cout << "Error! Cannot expand chunk beyond data array boundaries." << std::endl;
+    on_illegal_operation();
+  }
 }
+
 void enqueue_byte(Q *q, unsigned char b) {
   is_q_pointer_valid(q);
   // Get first chunk inde
