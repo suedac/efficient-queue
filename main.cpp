@@ -3,6 +3,7 @@
 
 #define MAX_MEMORY 128
 #define CHUNK_SIZE 8
+#define MIN_CONTINUOUS_SPACE 5
 unsigned char data[MAX_MEMORY] = {0}; // Total Memory
 
 typedef void Q;
@@ -20,12 +21,11 @@ void enqueue_byte(Q *q, unsigned char b);
 void delete_chunks_recursive(uint16_t chunk_index);
 void destroy_queue(Q *q);
 unsigned char dequeue_byte(Q *q);
+void find_next_free_space();
 
 int main() {
   initialize_memory();
   Q *q0 = create_queue();
-
-  enqueue_byte(q0, 0);
   enqueue_byte(q0, 1);
   Q *q1 = create_queue();
   enqueue_byte(q1, 3);
@@ -93,6 +93,8 @@ uint16_t create_chunk() {
 
   // TODO: Invert the bits of first bytes so  searching for 0 doesn't stumble
   // upon them
+  // NVM - The uin16_t type is big-endian bit-wise, so we don't need to do
+  // anything As the first bit will probably hold some value other than 0
 
   // Get start index by converting the first two bytes of the array to short int
   uint16_t *first_empty_index = reinterpret_cast<uint16_t *>(&data);
@@ -109,19 +111,12 @@ uint16_t create_chunk() {
       // Assuming this is the last chunk for now
       data[start_index + i - 2] = 0xFF;
       data[start_index + i - 1] = 0xFF;
+      find_next_free_space();
       return start_index;
       // TODO handle finding next free space
     }
   }
-  // If we didn't return in the previous loop
-  // that means we had an 16 byte free chunk
-  // Still, check the next 8 just in case
-  for (int i = 0; i < 8; i++) {
-    if (data[start_index + CHUNK_SIZE + i] != 0) {
-      // TODO handle if there's not enough space in front
-      exit(-31);
-    }
-  }
+  find_next_free_space();
   data[start_index + CHUNK_SIZE - 2] = 0xFF;
   data[start_index + CHUNK_SIZE - 1] = 0xFF;
   data[start_index] = CHUNK_SIZE;
@@ -194,25 +189,16 @@ void enqueue_byte(Q *q, unsigned char b) {
     data[temp] = b;
     *(empty_space_index + 1) += 1;
   } else {
-    if (can_chunk_expand(last_chunk_index)) {
-      expand_chunk(last_chunk_index);
-      unsigned char *empty_space_index =
-          reinterpret_cast<unsigned char *>(&data[last_chunk_index]);
-      uint16_t temp = *(empty_space_index + 1) + 2 + *first_chunk_index;
-      data[temp] = b;
-      *(empty_space_index + 1) += 1;
-    } else {
-      // Chunk is full here so we need to create a new chunk
-      // TODO
-      exit(-31);
-      // uint16_t next_chunk_index = create_chunk();
-      // add value to the new chunk
+    if (!can_chunk_expand(last_chunk_index)) {
+      find_next_free_space();
     }
+    expand_chunk(last_chunk_index);
+    unsigned char *empty_space_index =
+        reinterpret_cast<unsigned char *>(&data[last_chunk_index]);
+    uint16_t temp = *(empty_space_index + 1) + 2 + *first_chunk_index;
+    data[temp] = b;
+    *(empty_space_index + 1) += 1;
   }
-
-  // check if current chunk has space
-  // if chunk full, create new chunk
-  // if chunk not full, add value to chunk
 }
 
 void delete_chunks_recursive(uint16_t chunk_index) {
@@ -268,6 +254,43 @@ unsigned char dequeue_byte(Q *q) {
   return value;
 }
 
+void find_next_free_space() {
+  // Find the next available free space index
+  uint16_t current_index = 0;
+  uint16_t continuous_zeroes_count = 0;
+
+  while (current_index < MAX_MEMORY) {
+    // Check if the current byte is empty (contains 0)
+    if (data[current_index] == 0) {
+      continuous_zeroes_count++;
+
+      // Check if we have found a sequence of continuous zeroes
+      if (continuous_zeroes_count >= MIN_CONTINUOUS_SPACE) {
+        // Update the first two bytes of the data array with the next free space
+        // index
+        uint16_t *first_empty_index = reinterpret_cast<uint16_t *>(data);
+        *first_empty_index = current_index - continuous_zeroes_count + 1;
+
+        return;
+      }
+    } else {
+      continuous_zeroes_count = 0;
+    }
+
+    // Move to the next chunk
+    uint16_t chunk_length = data[current_index];
+    current_index += chunk_length;
+
+    // Skip the last two bytes of the chunk (next linked chunk's address)
+    current_index += 2;
+  }
+
+  // If no free space is found, update the first two bytes with MAX_MEMORY
+  uint16_t *first_empty_index = reinterpret_cast<uint16_t *>(data);
+  *first_empty_index = MAX_MEMORY;
+
+  on_out_of_memory();
+}
 /*
 The problem is to write a set of functions to manage a variable number of byte
 queues, each with variable length, in a small, fixed amount of memory. You
