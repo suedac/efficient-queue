@@ -72,8 +72,11 @@ course!) You can assume that no more than 64 queues will be created at once.*
 
 At first look, I thought array(unsigned char data[2048]) was for each queue, but after finishing the code, I realized that given array was the whole memory we should use. So I deleted all the code inside the functions and started with a new algorithm:
 
-I decided to use 8 bytes of chunks for data and some of the pointers. Using chunks was a good idea because I could link them without needing them to be together at the close places in the memory and I wouldn't need to delete the queue pointers. At the end my structure was like:
+I decided to use chunks of data and some pointers within each chunk. Using chunks was a good idea because I could link them without needing them to be together at the close places in the memory and I wouldn't need to delete the queue pointers since I will be pointing them outside of the chunks. Also, another reason to use chunk is, I can easily manipulate the chunks to add/delete data without having a limited memory problem. At the end, my structure for chunks was like:
 
-![Alt text](image.png)
+![data chunk structure](image.png)
 
+But there were still some data I needed to know, like where is the first available place I can place my new chunk, and where my chunk starts. Also I should make them outside of the chunk itself so if my chunk got deleted, I wouldn't lose them. Let me show you the new style of the structure I made:
+ 
+![New chunk chart](image-1.png)
 
