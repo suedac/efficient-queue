@@ -191,8 +191,33 @@ void enqueue_byte(Q *q, unsigned char b)
     // if chunk full, create new chunk
     // if chunk not full, add value to chunk
 }
-void destroy_queue(Q *q) {
 
+void delete_chunks_recursive(uint16_t chunk_index) {
+
+  const unsigned char chunkLength = data[chunk_index];
+
+  // Last two bytes holds the next chunk's address
+  const uint16_t last_two_bytes_index = chunk_index + chunkLength - 2;
+  const uint16_t next_chunk_index =
+      *reinterpret_cast<uint16_t *>(&data[last_two_bytes_index]);
+  if (next_chunk_index == 65535) {
+    // Delete the last chunk
+    for (int i = 0; i < chunkLength; i++) {
+      data[chunk_index + i] = 0;
+    }
+    return;
+  } else {
+    // Delete the current chunk, then move on to the next one
+    for (int i = 0; i < chunkLength; i++) {
+      data[chunk_index + i] = 0;
+    }
+    delete_chunks_recursive(next_chunk_index);
+  }
+}
+
+
+void destroy_queue(Q *q) 
+{
 }
 unsigned char dequeue_byte(Q *q)
 {
