@@ -255,6 +255,7 @@ void delete_chunks_recursive(uint16_t chunk_index) {
 }
 
 void destroy_queue(Q *q) {
+    is_q_pointer_valid(q);
   // Reminder - A Q pointer is just a 16 bit address to the
   // first chunk of the queue
   uint16_t *first_chunk_index = reinterpret_cast<uint16_t *>(q);
