@@ -97,7 +97,7 @@ uint16_t create_chunk() {
   // NVM - The uin16_t type is big-endian bit-wise, so we don't need to do
   // anything As the first bit will probably hold some value other than 0
 
-  // Get start index by converting the first two bytes of the array to short int
+  // Get start index by converting the first two bytes of the array t`o short int
   uint16_t *first_empty_index = reinterpret_cast<uint16_t *>(&data);
   uint16_t start_index = *first_empty_index;
 
@@ -219,10 +219,17 @@ void enqueue_byte(Q *q, unsigned char b) {
       data[temp] = b;
       *(empty_space_index + 1) += 1;
     } else {
-      create_chunk();
+      // Chunk was full and it couldn't be expanded, create new chunk
+      // This create_chunk() function returns the adress of the chunk it created
+      // We need to add it to the last two bytes of the last chunk
+      uint16_t new_chunk_address = create_chunk();
+      unsigned char chunk_length = data[last_chunk_index];
+      uint16_t *next_chunk_pointer = reinterpret_cast<uint16_t*>(&data[last_chunk_index + chunk_length]);
+      *next_chunk_pointer = new_chunk_address;
+
       enqueue_byte(q, b);
     }
-  }
+  } 
 }
 
 void delete_chunks_recursive(uint16_t chunk_index) {
