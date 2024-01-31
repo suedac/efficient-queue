@@ -1,9 +1,9 @@
 #include <iostream>
 #include <vector>
 
-#define MAX_MEMORY 128
-#define CHUNK_SIZE 8
-#define MIN_CONTINUOUS_SPACE 5
+#define MAX_MEMORY 2048
+#define CHUNK_SIZE 16
+#define MIN_CONTINUOUS_SPACE 6
 unsigned char data[MAX_MEMORY] = {0}; // Total Memory
 
 typedef void Q;
@@ -26,6 +26,7 @@ void find_next_free_space();
 int main() {
   initialize_memory();
   Q *q0 = create_queue();
+  enqueue_byte(q0, 0);
   enqueue_byte(q0, 1);
   Q *q1 = create_queue();
   enqueue_byte(q1, 3);
