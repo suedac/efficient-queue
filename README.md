@@ -85,6 +85,6 @@ As you can see in the images, I mostly use 2 bytes for the location showing poin
 
 I also would like to show how I traverse around the chunks of a queue.
 
-![How traversing inside chunk works](image-3.png)
+![HOW TRAVERSING AROUND CHUNKS WORKS](image-4.png)
 
 As you can see in the image, last two bytes of the chunk is reserved to traverse to the first bytes of the next chunk.
