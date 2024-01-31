@@ -92,11 +92,6 @@ uint16_t create_chunk() {
   // Last two bytes -> Next linked chunk's address, or FF if it's the last chunk
   // Returns the index of the first byte of the chunk
 
-  // TODO: Invert the bits of first bytes so  searching for 0 doesn't stumble
-  // upon them
-  // NVM - The uin16_t type is big-endian bit-wise, so we don't need to do
-  // anything As the first bit will probably hold some value other than 0
-
   // Get start index by converting the first two bytes of the array t`o short
   // int
   uint16_t *first_empty_index = reinterpret_cast<uint16_t *>(&data);
