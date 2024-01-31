@@ -224,7 +224,7 @@ void enqueue_byte(Q *q, unsigned char b) {
       // We need to add it to the last two bytes of the last chunk
       uint16_t new_chunk_address = create_chunk();
       unsigned char chunk_length = data[last_chunk_index];
-      uint16_t *next_chunk_pointer = reinterpret_cast<uint16_t*>(&data[last_chunk_index + chunk_length]);
+      uint16_t *next_chunk_pointer = reinterpret_cast<uint16_t*>(&data[last_chunk_index + chunk_length - 2]);
       *next_chunk_pointer = new_chunk_address;
 
       enqueue_byte(q, b);
