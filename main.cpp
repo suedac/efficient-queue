@@ -288,7 +288,8 @@ unsigned char dequeue_byte(Q *q) {
     // Set the Q pointer to the next chunk
     uint16_t *next_chunk_address =
         reinterpret_cast<uint16_t *>(&data[next_chunk_index]);
-    q = next_chunk_address;
+    uint16_t *queue_pointer = reinterpret_cast<uint16_t *>(q);
+    *queue_pointer = *next_chunk_address;
     for (int i = 0; i < chunkLength; i++) {
       data[first_chunk_index + i] = 0;
     }
