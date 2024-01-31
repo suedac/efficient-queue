@@ -97,7 +97,8 @@ uint16_t create_chunk() {
   // NVM - The uin16_t type is big-endian bit-wise, so we don't need to do
   // anything As the first bit will probably hold some value other than 0
 
-  // Get start index by converting the first two bytes of the array t`o short int
+  // Get start index by converting the first two bytes of the array t`o short
+  // int
   uint16_t *first_empty_index = reinterpret_cast<uint16_t *>(&data);
   uint16_t start_index = *first_empty_index;
 
@@ -224,12 +225,13 @@ void enqueue_byte(Q *q, unsigned char b) {
       // We need to add it to the last two bytes of the last chunk
       uint16_t new_chunk_address = create_chunk();
       unsigned char chunk_length = data[last_chunk_index];
-      uint16_t *next_chunk_pointer = reinterpret_cast<uint16_t*>(&data[last_chunk_index + chunk_length - 2]);
+      uint16_t *next_chunk_pointer = reinterpret_cast<uint16_t *>(
+          &data[last_chunk_index + chunk_length - 2]);
       *next_chunk_pointer = new_chunk_address;
 
       enqueue_byte(q, b);
     }
-  } 
+  }
 }
 
 void delete_chunks_recursive(uint16_t chunk_index) {
@@ -255,7 +257,7 @@ void delete_chunks_recursive(uint16_t chunk_index) {
 }
 
 void destroy_queue(Q *q) {
-    is_q_pointer_valid(q);
+  is_q_pointer_valid(q);
   // Reminder - A Q pointer is just a 16 bit address to the
   // first chunk of the queue
   uint16_t *first_chunk_index = reinterpret_cast<uint16_t *>(q);
@@ -271,6 +273,28 @@ unsigned char dequeue_byte(Q *q) {
   is_q_pointer_valid(q);
 
   uint16_t first_chunk_index = *reinterpret_cast<uint16_t *>(q);
+  unsigned char byte = data[first_chunk_index + 2];
+
+  unsigned char byte_in_queue_count = data[first_chunk_index + 1];
+  // Last two bytes holds the next chunk's address
+  const unsigned char chunkLength = data[first_chunk_index];
+  const uint16_t last_two_bytes_index = first_chunk_index + chunkLength - 2;
+  const uint16_t next_chunk_index =
+      *reinterpret_cast<uint16_t *>(&data[last_two_bytes_index]);
+  if (byte_in_queue_count == 0)
+    on_illegal_operation();
+  if (byte_in_queue_count == 1 && next_chunk_index != 65535) {
+    // If there's one byte left in the chunk, we might as well delete the chunk
+    // Set the Q pointer to the next chunk
+    uint16_t *next_chunk_address =
+        reinterpret_cast<uint16_t *>(&data[next_chunk_index]);
+    q = next_chunk_address;
+    for (int i = 0; i < chunkLength; i++) {
+      data[first_chunk_index + i] = 0;
+    }
+    return byte;
+  }
+
   unsigned char value = data[first_chunk_index + 2];
   data[first_chunk_index + 2] = data[first_chunk_index + 1];
   data[first_chunk_index + 1] = data[first_chunk_index];
@@ -282,7 +306,7 @@ unsigned char dequeue_byte(Q *q) {
 
   // check the first chunk
   // pop the value out of the
-  return value;
+  return byte;
 }
 
 void find_next_free_space() {
