@@ -6,10 +6,10 @@ The problem is to write a set of functions to manage a variable number of byte
 queues, each with variable length, in a small, fixed amount of memory. You
 should provide implementations of the following four function
 
-Q *create_queue(); // Creates a FIFO byte queue, returning a handle to it.
-void destroy_queue(Q *q); // Destroy an earlier created byte queue.
-void enqueue_byte(Q *q, unsigned char b); // Adds a new byte to a queue.
-unsigned char dequeue_byte(Q *q); // Pops the next byte off the FIFO queue.
+    Q *create_queue(); // Creates a FIFO byte queue, returning a handle to it.
+    void destroy_queue(Q *q); // Destroy an earlier created byte queue.
+    void enqueue_byte(Q *q, unsigned char b); // Adds a new byte to a queue.
+    unsigned char dequeue_byte(Q *q); // Pops the next byte off the FIFO queue.
 
 So, the output from the following set of calls:
 
