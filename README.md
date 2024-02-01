@@ -71,6 +71,8 @@ The problem given:
 > individual queue. Your code should not assume a maximum number of bytes in a
 > queue (other than that imposed by the total amount of memory available, of
 > course!) You can assume that no more than 64 queues will be created at once.
+> 
+**LET'S TAKE A LOOK AT THE ALGORITHM**
 
 At first look, I thought array(unsigned char data[2048]) was for each queue, but after finishing the code, I realized that given array was the whole memory we should use. So I deleted all the code inside the functions and started with a new algorithm:
 
@@ -89,3 +91,17 @@ I also would like to show how I traverse around the chunks of a queue.
 ![HOW TRAVERSING AROUND CHUNKS WORKS](media/image-4.png)
 
 As you can see in the image, last two bytes of the chunk is reserved to traverse to the first bytes of the next chunk.
+
+**REGARDING EXECUTION SPEED**
+
+>"Execution speed is important. Worst-case performance when adding and removing
+> bytes is more important than average-case performance."
+
+This was one of the real challenges in the project. Even though I can't say my code is the most efficient version of all, I can proudly say I tried my best to write it in an efficient way as my experience let me. When I first started thinking about execution speed therefore efficiency of the code I had to trash all the ideas with shifting the bytes in the memory (definitely not efficient to shift 2000 bytes for placing one byte:D). After a quick research and hours of debate with other engineer friends, I decided the best way I could do is using chunks with a small amount of empty space and definitely avoid the use of shifting the bytes. Also existence of pointers in c++ (even though they're little mischiefs of the language) helped a lot as well in terms of efficiency. I also would like to mention a website which had the solution of the exact same problem, I got lots of inspiration from this blog post so I would like to give them the credits : https://progtools.org/article.php?name=queue&section=compilers&type=tutorial
+
+
+
+**POTENTIAL IMPROVEMENTS**
+
+* I think we all realize that this code is not the best solution in terms of efficiency (that's why its efficien't).  
+* Probably there are safety issues/potential bugs in the code itself since I play with dangerous stuff(interpret casts, pointers etc.) To solve this we could use a memory safe language / static analyses tools. 
