@@ -4,7 +4,10 @@
 #define MAX_MEMORY 2048
 #define CHUNK_SIZE 16
 #define MIN_CONTINUOUS_SPACE 6
+#define END_OF_CHUNK_BYTES 65535
 unsigned char data[MAX_MEMORY] = {0}; // Total Memory
+
+
 
 typedef void Q;
 void on_out_of_memory();
@@ -56,7 +59,7 @@ void on_illegal_operation() {
 
 void is_q_pointer_valid(Q *q) {
   // Reminder - A Q pointer is just a 16 bit address to the
-  // first chunk of the queue. If it's 0, the Q was deletrd.
+  // first chunk of the queue. If it's 0, the Q was deleted.
   uint16_t *first_chunk_index = reinterpret_cast<uint16_t *>(q);
   if (*first_chunk_index == 0) {
     on_illegal_operation();
@@ -67,8 +70,11 @@ void initialize_memory() {
   // Index 0 and 1 are reserved to hold the next available free space
   // Therefore we use short int (2 byte size) type to store the value
   // Therefore our first available free space is at index 2
-  short int *val = reinterpret_cast<short int *>(data);
-  *val = 2;
+  short int *first_empty_space_index = reinterpret_cast<short int *>(&data[0]);
+  *first_empty_space_index = 2;
+  // One more byte to hold the number of queues (to make sure it's less than 64)
+  *first_empty_space_index += 1;
+  // So now our first empty space should start from the 4th byte
 }
 
 void print_memory() {
@@ -124,6 +130,11 @@ uint16_t create_chunk() {
 }
 
 Q *create_queue() {
+unsigned char *queue_count = &data[2];
+
+if(*queue_count > 64){
+   on_illegal_operation();
+}
 
   // Possible undefined behaviour
   // get the first empty index from first 2 bytes of the data;
@@ -132,7 +143,7 @@ Q *create_queue() {
   uint16_t index = *first_empty_index;
   // Create queue (store index of first related chunk)
   uint16_t *queue = reinterpret_cast<uint16_t *>(data + index);
-
+  *queue_count++;
   // Update the firts empty index
 
   *first_empty_index = *first_empty_index + 2 * sizeof(unsigned char);
@@ -155,7 +166,7 @@ uint16_t traverse_chunk(uint16_t chunk_index) {
 
   const uint16_t index = chunk_index + chunkLength - 2;
   const uint16_t next_chunk_index = *reinterpret_cast<uint16_t *>(&data[index]);
-  if (next_chunk_index == 65535)
+  if (next_chunk_index == END_OF_CHUNK_BYTES)
     return chunk_index;
   else
     return traverse_chunk(next_chunk_index);
@@ -236,7 +247,7 @@ void delete_chunks_recursive(uint16_t chunk_index) {
   const uint16_t last_two_bytes_index = chunk_index + chunkLength - 2;
   const uint16_t next_chunk_index =
       *reinterpret_cast<uint16_t *>(&data[last_two_bytes_index]);
-  if (next_chunk_index == 65535) {
+  if (next_chunk_index == END_OF_CHUNK_BYTES) {
     // Delete the last chunk
     for (int i = 0; i < chunkLength; i++) {
       data[chunk_index + i] = 0;
@@ -252,6 +263,7 @@ void delete_chunks_recursive(uint16_t chunk_index) {
 }
 
 void destroy_queue(Q *q) {
+  unsigned char *queue_count = &data[2];
   is_q_pointer_valid(q);
   // Reminder - A Q pointer is just a 16 bit address to the
   // first chunk of the queue
@@ -262,6 +274,7 @@ void destroy_queue(Q *q) {
 
   // And this just zeroes our q pointer thingy
   *first_chunk_index = 0;
+  *queue_count--;
 }
 
 unsigned char dequeue_byte(Q *q) {
@@ -278,7 +291,7 @@ unsigned char dequeue_byte(Q *q) {
       *reinterpret_cast<uint16_t *>(&data[last_two_bytes_index]);
   if (byte_in_queue_count == 0)
     on_illegal_operation();
-  if (byte_in_queue_count == 1 && next_chunk_index != 65535) {
+  if (byte_in_queue_count == 1 && next_chunk_index != END_OF_CHUNK_BYTES) {
     // If there's one byte left in the chunk, we might as well delete the chunk
     // Set the Q pointer to the next chunk
     uint16_t *next_chunk_address =
