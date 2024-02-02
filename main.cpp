@@ -28,26 +28,27 @@ void find_next_free_space();
 
 int main() {
   initialize_memory();
-  Q *q0 = create_queue();
-  for(int i = 0; i = 50; i++){
-    create_queue();
-  }
-  /*enqueue_byte(q0, 1);
-  Q *q1 = create_queue();
-  enqueue_byte(q1, 3);
-  enqueue_byte(q0, 2);
-  enqueue_byte(q1, 4);
-  printf("%d ", dequeue_byte(q0));
-  printf("%d\n", dequeue_byte(q0));
-  enqueue_byte(q0, 5);
-  enqueue_byte(q1, 6);
-  printf("%d ", dequeue_byte(q0));
-  printf("%d\n", dequeue_byte(q0));
-  destroy_queue(q0);
-  printf("%d ", dequeue_byte(q1));
-  printf("%d ", dequeue_byte(q1));
-  printf("%d\n", dequeue_byte(q1));
-  destroy_queue(q1);*/
+  //for(int i = 0; i < 69; i++){
+  // create_queue();
+  //}
+ Q *q0 = create_queue();
+enqueue_byte(q0, 0);
+enqueue_byte(q0, 1);
+Q *q1 = create_queue();
+enqueue_byte(q1, 3);
+enqueue_byte(q0, 2);
+enqueue_byte(q1, 4);
+printf("%d ", dequeue_byte(q0));
+printf("%d\n", dequeue_byte(q0));
+enqueue_byte(q0, 5);
+enqueue_byte(q1, 6);
+printf("%d ", dequeue_byte(q0));
+printf("%d\n", dequeue_byte(q0));
+destroy_queue(q0);
+printf("%d ", dequeue_byte(q1));
+printf("%d ", dequeue_byte(q1));
+printf("%d\n", dequeue_byte(q1));
+destroy_queue(q1);
 }
 
 void on_out_of_memory() {
@@ -113,7 +114,7 @@ uint16_t create_chunk() {
       // Set first byte -> Lenth of the chunk itself
       // Second byte (len of actual values) is already 0 for new chunks, so we
       // can skip it
-      data[start_index] = i;
+      data[start_index] = i+1;
       // Assuming this is the last chunk for now
       data[start_index + i - 2] = 0xFF;
       data[start_index + i - 1] = 0xFF;
@@ -132,13 +133,9 @@ uint16_t create_chunk() {
 }
 
 Q *create_queue() {
-unsigned char *queue_count = &data[2];
-
-if(*queue_count > 64){
-  std::cout << "Can't create more than 64 queues" << std::endl;
-   on_illegal_operation();
+if(data[2] > 64){
+  on_illegal_operation();
 }
-
   // Possible undefined behaviour
   // get the first empty index from first 2 bytes of the data;
   uint16_t *first_empty_index = reinterpret_cast<uint16_t *>(data);
@@ -146,7 +143,8 @@ if(*queue_count > 64){
   uint16_t index = *first_empty_index;
   // Create queue (store index of first related chunk)
   uint16_t *queue = reinterpret_cast<uint16_t *>(data + index);
-  *queue_count++;
+  data[2]++;
+  printf("queue count:%d\n", data[2]);
   // Update the firts empty index
 
   *first_empty_index = *first_empty_index + 2 * sizeof(unsigned char);
@@ -266,7 +264,6 @@ void delete_chunks_recursive(uint16_t chunk_index) {
 }
 
 void destroy_queue(Q *q) {
-  unsigned char *queue_count = &data[2];
   is_q_pointer_valid(q);
   // Reminder - A Q pointer is just a 16 bit address to the
   // first chunk of the queue
@@ -277,7 +274,8 @@ void destroy_queue(Q *q) {
 
   // And this just zeroes our q pointer thingy
   *first_chunk_index = 0;
-  *queue_count--;
+  data[2]--;
+  printf("queue count:%d\n",data[2]);
 }
 
 unsigned char dequeue_byte(Q *q) {
