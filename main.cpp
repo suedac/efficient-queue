@@ -29,8 +29,10 @@ void find_next_free_space();
 int main() {
   initialize_memory();
   Q *q0 = create_queue();
-  enqueue_byte(q0, 0);
-  enqueue_byte(q0, 1);
+  for(int i = 0; i = 50; i++){
+    create_queue();
+  }
+  /*enqueue_byte(q0, 1);
   Q *q1 = create_queue();
   enqueue_byte(q1, 3);
   enqueue_byte(q0, 2);
@@ -45,7 +47,7 @@ int main() {
   printf("%d ", dequeue_byte(q1));
   printf("%d ", dequeue_byte(q1));
   printf("%d\n", dequeue_byte(q1));
-  destroy_queue(q1);
+  destroy_queue(q1);*/
 }
 
 void on_out_of_memory() {
@@ -62,6 +64,7 @@ void is_q_pointer_valid(Q *q) {
   // first chunk of the queue. If it's 0, the Q was deleted.
   uint16_t *first_chunk_index = reinterpret_cast<uint16_t *>(q);
   if (*first_chunk_index == 0) {
+    std::cout << "Invalid pointer used for queue operation" << std::endl;
     on_illegal_operation();
   }
 }
@@ -124,7 +127,6 @@ uint16_t create_chunk() {
   data[start_index + CHUNK_SIZE - 1] = 0xFF;
   data[start_index] = CHUNK_SIZE;
   *first_empty_index = start_index + CHUNK_SIZE;
-  std::cout << std::endl;
 
   return start_index;
 }
@@ -133,6 +135,7 @@ Q *create_queue() {
 unsigned char *queue_count = &data[2];
 
 if(*queue_count > 64){
+  std::cout << "Can't create more than 64 queues" << std::endl;
    on_illegal_operation();
 }
 
@@ -290,7 +293,10 @@ unsigned char dequeue_byte(Q *q) {
   const uint16_t next_chunk_index =
       *reinterpret_cast<uint16_t *>(&data[last_two_bytes_index]);
   if (byte_in_queue_count == 0)
+  {
+    std::cout << "Can't remove byte from queue, it's empty" << std::endl;
     on_illegal_operation();
+  }
   if (byte_in_queue_count == 1 && next_chunk_index != END_OF_CHUNK_BYTES) {
     // If there's one byte left in the chunk, we might as well delete the chunk
     // Set the Q pointer to the next chunk
@@ -352,7 +358,7 @@ void find_next_free_space() {
   // If no free space is found, update the first two bytes with MAX_MEMORY
   uint16_t *first_empty_index = reinterpret_cast<uint16_t *>(data);
   *first_empty_index = MAX_MEMORY;
-
+  std::cout << "Next free space couldn't be found" << std::endl;
   on_out_of_memory();
 }
 /*
