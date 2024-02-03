@@ -1,13 +1,10 @@
 #include <iostream>
-#include <vector>
 
 #define MAX_MEMORY 2048
 #define CHUNK_SIZE 16
 #define MIN_CONTINUOUS_SPACE CHUNK_SIZE - 3
 #define END_OF_CHUNK_BYTES 65535
 unsigned char data[MAX_MEMORY] = {0}; // Total Memory
-
-
 
 typedef void Q;
 void on_out_of_memory();
@@ -28,30 +25,24 @@ void find_next_free_space();
 
 int main() {
   initialize_memory();
-  for(int i = 0; i < 50; i++){
-   Q *q = create_queue();
-    for(int j = 0; j<30; j++){
-      enqueue_byte(q, j);
-    }
-  }
- Q *q0 = create_queue();
-enqueue_byte(q0, 0);
-enqueue_byte(q0, 1);
-Q *q1 = create_queue();
-enqueue_byte(q1, 3);
-enqueue_byte(q0, 2);
-enqueue_byte(q1, 4);
-printf("%d ", dequeue_byte(q0));
-printf("%d\n", dequeue_byte(q0));
-enqueue_byte(q0, 5);
-enqueue_byte(q1, 6);
-printf("%d ", dequeue_byte(q0));
-printf("%d\n", dequeue_byte(q0));
-destroy_queue(q0);
-printf("%d ", dequeue_byte(q1));
-printf("%d ", dequeue_byte(q1));
-printf("%d\n", dequeue_byte(q1));
-destroy_queue(q1);
+  Q *q0 = create_queue();
+  enqueue_byte(q0, 0);
+  enqueue_byte(q0, 1);
+  Q *q1 = create_queue();
+  enqueue_byte(q1, 3);
+  enqueue_byte(q0, 2);
+  enqueue_byte(q1, 4);
+  printf("%d ", dequeue_byte(q0));
+  printf("%d\n", dequeue_byte(q0));
+  enqueue_byte(q0, 5);
+  enqueue_byte(q1, 6);
+  printf("%d ", dequeue_byte(q0));
+  printf("%d\n", dequeue_byte(q0));
+  destroy_queue(q0);
+  printf("%d ", dequeue_byte(q1));
+  printf("%d ", dequeue_byte(q1));
+  printf("%d\n", dequeue_byte(q1));
+  destroy_queue(q1);
 }
 
 void on_out_of_memory() {
@@ -86,7 +77,7 @@ void initialize_memory() {
 
 void print_memory() {
   // For debugging purposes, use when MAX_MEMORY is something low like 32
-  uint16_t *first_empty_index = reinterpret_cast<uint16_t *>(data);
+  const uint16_t *first_empty_index = reinterpret_cast<uint16_t *>(data);
   printf("\n %d\n", *first_empty_index);
   for (int i = 0; i < MAX_MEMORY; i++) {
     printf("%d /", data[i]);
@@ -108,7 +99,7 @@ uint16_t create_chunk() {
   // Get start index by converting the first two bytes of the array t`o short
   // int
   uint16_t *first_empty_index = reinterpret_cast<uint16_t *>(&data);
-  uint16_t start_index = *first_empty_index;
+  const uint16_t start_index = *first_empty_index;
 
   for (int i = 0; i < CHUNK_SIZE; i++) {
     if (data[start_index + i] == 0) {
@@ -117,7 +108,7 @@ uint16_t create_chunk() {
       // Set first byte -> Lenth of the chunk itself
       // Second byte (len of actual values) is already 0 for new chunks, so we
       // can skip it
-      data[start_index] = i+1;
+      data[start_index] = i + 1;
       // Assuming this is the last chunk for now
       data[start_index + i - 2] = 0xFF;
       data[start_index + i - 1] = 0xFF;
@@ -136,35 +127,33 @@ uint16_t create_chunk() {
 }
 
 Q *create_queue() {
-if(data[2] > 64){
-  on_illegal_operation();
-}
+  if (data[2] > 64) {
+    on_illegal_operation();
+  }
   // Possible undefined behaviour
   // get the first empty index from first 2 bytes of the data;
   uint16_t *first_empty_index = reinterpret_cast<uint16_t *>(data);
 
-  uint16_t index = *first_empty_index;
+  const uint16_t index = *first_empty_index;
   // Create queue (store index of first related chunk)
   uint16_t *queue = reinterpret_cast<uint16_t *>(data + index);
   data[2]++;
-  //printf("queue count:%d\n", data[2]);
-  // Update the firts empty index
+  // printf("queue count:%d\n", data[2]);
+  //  Update the firts empty index
 
   *first_empty_index = *first_empty_index + 2 * sizeof(unsigned char);
 
-  uint16_t x = create_chunk();
-  *queue = x;
-
+  *queue = create_chunk();
   return queue;
 }
 
-bool is_chunk_full(uint16_t chunk_index) {
+bool is_chunk_full(const uint16_t chunk_index) {
   return data[chunk_index + 1] >= data[chunk_index] - 4;
 }
 
 // Traverse linked chunks to find last chunk
 
-uint16_t traverse_chunk(uint16_t chunk_index) {
+uint16_t traverse_chunk(const uint16_t chunk_index) {
 
   const unsigned char chunkLength = data[chunk_index];
 
@@ -176,13 +165,13 @@ uint16_t traverse_chunk(uint16_t chunk_index) {
     return traverse_chunk(next_chunk_index);
 }
 
-bool can_chunk_expand(uint16_t chunk_index) {
+bool can_chunk_expand(const uint16_t chunk_index) {
   uint16_t chunk_size = data[chunk_index];
   return data[chunk_index + chunk_size + 1] == 0 && chunk_size < 255;
 }
 
-bool expand_chunk(uint16_t chunk_index) {
-  uint16_t chunk_size = data[chunk_index];
+bool expand_chunk(const uint16_t chunk_index) {
+  const uint16_t chunk_size = data[chunk_index];
 
   // Check if there is enough space in the data array to expand
   if (chunk_index + chunk_size < MAX_MEMORY) {
@@ -279,7 +268,7 @@ void destroy_queue(Q *q) {
   // And this just zeroes our q pointer thingy
   *first_chunk_index = 0;
   data[2]--;
-  //printf("queue count:%d\n",data[2]);
+  // printf("queue count:%d\n",data[2]);
 }
 
 unsigned char dequeue_byte(Q *q) {
@@ -294,8 +283,7 @@ unsigned char dequeue_byte(Q *q) {
   const uint16_t last_two_bytes_index = first_chunk_index + chunkLength - 2;
   const uint16_t next_chunk_index =
       *reinterpret_cast<uint16_t *>(&data[last_two_bytes_index]);
-  if (byte_in_queue_count == 0)
-  {
+  if (byte_in_queue_count == 0) {
     std::cout << "Can't remove byte from queue, it's empty" << std::endl;
     on_illegal_operation();
   }
@@ -312,7 +300,6 @@ unsigned char dequeue_byte(Q *q) {
     return byte;
   }
 
-  unsigned char value = data[first_chunk_index + 2];
   data[first_chunk_index + 2] = data[first_chunk_index + 1];
   data[first_chunk_index + 1] = data[first_chunk_index];
   data[first_chunk_index] = 0;
@@ -331,8 +318,9 @@ void find_next_free_space() {
   uint16_t current_index = 0;
   uint16_t continuous_zeroes_count = 0;
 
-  while (current_index < MAX_MEMORY) {
+  while (current_index < MAX_MEMORY - 4) {
     // Check if the current byte is empty (contains 0)
+    // if(continuous_zeroes_count > 4){
     if (data[current_index] == 0) {
       continuous_zeroes_count++;
 
@@ -342,21 +330,23 @@ void find_next_free_space() {
         // index
         uint16_t *first_empty_index = reinterpret_cast<uint16_t *>(data);
         *first_empty_index = current_index - continuous_zeroes_count + 1;
-        //printf("Next free space: %d\n", reinterpret_cast<uint8_t>(data[0]));
+        // printf("Next free space: %d\n", reinterpret_cast<uint8_t>(data[0]));
         return;
-      }
-      else {
+      } else {
         // We look until we reach MIN_CONTINUOUS_SPACE
         current_index += 1;
         continue;
       }
     } else {
-      // Last byte we looked wasn't a 0, and there wasn't enough 0 bytes to consider
-      // continue looking for a new empty space beginning
+      // Last byte we looked wasn't a 0, and there wasn't enough 0 bytes to
+      // consider continue looking for a new empty space beginning
       continuous_zeroes_count = 0;
       current_index += 1;
       continue;
     }
+    /* }else{
+       on_out_of_memory();
+     }*/
   }
 
   // If no free space is found, update the first two bytes with MAX_MEMORY
