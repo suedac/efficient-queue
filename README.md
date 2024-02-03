@@ -80,9 +80,9 @@ I decided to use chunks of data and some pointers within each chunk. Using chunk
 
 ![data chunk structure](media/image.png)
 
-But there were still some data I needed to know, like where is the first available place I can place my new chunk, and where my chunk starts. Also I should make them outside of the chunk itself so if my chunk got deleted, I wouldn't lose them. Let me show you the new style of the structure I made:
+But there were still some data I needed to know, like where is the first available place I can place my new chunk, and where my chunk starts. Also I should make them outside of the chunk itself so if my chunk got deleted, I wouldn't lose them. Also I have one more byte for controling how many queues in the array and stop if there is too many(more than 64). Let me show you the new style of the structure I made:
 
-![NEW CHUNK STRUCTURE](media/image-2.png)
+![first bytes in the array](image-1.png)
 
 As you can see in the images, I mostly use 2 bytes for the location showing pointers, thats because we have 2048 bytes of space and one byte can hold maximum of 256 values(2^8) so we use 2 bytes to make it reach till the end of the memory(256*256). We use reinterpret_cast<uint16_t *> to trick c++ into read two bytes in one value. 
 
