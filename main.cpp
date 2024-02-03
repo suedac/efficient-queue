@@ -313,14 +313,14 @@ unsigned char dequeue_byte(Q *q) {
   return byte;
 }
 
+//MAX_MEMORY-4 because if there's less than 4 bytes left, we cant add anything to the new chunk.
 void find_next_free_space() {
   // Find the next available free space index
   uint16_t current_index = 0;
   uint16_t continuous_zeroes_count = 0;
-
   while (current_index < MAX_MEMORY - 4) {
     // Check if the current byte is empty (contains 0)
-    // if(continuous_zeroes_count > 4){
+  
     if (data[current_index] == 0) {
       continuous_zeroes_count++;
 
@@ -344,9 +344,7 @@ void find_next_free_space() {
       current_index += 1;
       continue;
     }
-    /* }else{
-       on_out_of_memory();
-     }*/
+    
   }
 
   // If no free space is found, update the first two bytes with MAX_MEMORY
