@@ -54,15 +54,16 @@ void on_illegal_operation() {
   abort();
 }
 
-void is_q_pointer_valid(Q *q) {
+void is_q_pointer_valid(Q *const q) {
   // Reminder - A Q pointer is just a 16 bit address to the
   // first chunk of the queue. If it's 0, the Q was deleted.
   uint16_t *first_chunk_index = reinterpret_cast<uint16_t *>(q);
-  if (*first_chunk_index == 0) {
+  if (first_chunk_index == NULL || *first_chunk_index == 0 ) {
     std::cout << "Invalid pointer used for queue operation" << std::endl;
     on_illegal_operation();
   }
-}
+
+} 
 
 void initialize_memory() {
   // Index 0 and 1 are reserved to hold the next available free space
@@ -197,7 +198,7 @@ bool expand_chunk(const uint16_t chunk_index) {
   }
 }
 
-void enqueue_byte(Q *q, unsigned char b) {
+void enqueue_byte(Q *const q, unsigned char b) {
   is_q_pointer_valid(q);
 
   uint16_t *first_chunk_index = reinterpret_cast<uint16_t *>(q);
@@ -256,7 +257,7 @@ void delete_chunks_recursive(uint16_t chunk_index) {
   }
 }
 
-void destroy_queue(Q *q) {
+void destroy_queue(Q *const q) {
   is_q_pointer_valid(q);
   // Reminder - A Q pointer is just a 16 bit address to the
   // first chunk of the queue
@@ -271,7 +272,7 @@ void destroy_queue(Q *q) {
   // printf("queue count:%d\n",data[2]);
 }
 
-unsigned char dequeue_byte(Q *q) {
+unsigned char dequeue_byte(Q *const q) {
   is_q_pointer_valid(q);
 
   uint16_t first_chunk_index = *reinterpret_cast<uint16_t *>(q);
